@@ -44,6 +44,7 @@ class Snapshot(NamedTuple):
     box: Box
     dt: Union[JaxArray, float]
     extras: Optional[Dict[str, Any]] = None
+    energy: Optional[JaxArray] = None #reactive-md
 
     def __repr__(self):
         return "PySAGES " + type(self).__name__
@@ -54,6 +55,8 @@ class SnapshotMethods(NamedTuple):
     indices: Callable
     momenta: Callable
     masses: Callable
+    forces: Callable = None  #reactive-md
+    energy: Callable = None  #reactive-md
 
 
 class HelperMethods(NamedTuple):

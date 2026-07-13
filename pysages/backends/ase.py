@@ -103,6 +103,7 @@ def take_snapshot(simulation, forces=None):
 
     positions = np.asarray(atoms.get_positions())
     forces = np.asarray(atoms.get_forces(md=True) if forces is None else forces)
+    energy = np.asarray(atoms.get_potential_energy())  #reactive-md
     ids = np.arange(len(positions))
     momenta = np.asarray(atoms.get_momenta())
     masses = np.asarray(atoms.get_masses()).reshape(-1, 1)
@@ -112,7 +113,7 @@ def take_snapshot(simulation, forces=None):
     origin = (0.0, 0.0, 0.0)
     dt = simulation.dt
 
-    return Snapshot(positions, vel_mass, forces, ids, Box(H, origin), dt)
+    return Snapshot(positions, vel_mass, forces, ids, Box(H, origin), dt, None, energy) #reactive-md
 
 
 def _calculator_defaults(sig, arg, default=[]):
@@ -135,8 +136,14 @@ def build_snapshot_methods(context, sampling_method):
     def momenta(snapshot):
         P, _ = snapshot.vel_mass
         return P.flatten()
+    
+    def forces(snapshot):  #reactive-md
+        return snapshot.forces
 
-    return SnapshotMethods(jit(positions), jit(indices), jit(momenta), jit(masses))
+    def energy(snapshot):  #reactive-md
+        return snapshot.energy
+
+    return SnapshotMethods(jit(positions), jit(indices), jit(momenta), jit(masses),jit(forces), jit(energy))  #reactive-md
 
 
 def build_helpers(context, sampling_method):
