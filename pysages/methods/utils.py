@@ -214,3 +214,8 @@ def numpyfy_vals(dictionary: dict, numpy_only: bool = False):
             if numpy_array.dtype != numpy.dtype("O"):
                 new_dict[key] = numpy_array
     return new_dict
+
+
+def position_guard(prev_positions, positions): #reactive-md
+    """True on a genuinely new MD step; False on the ASE refresh re-fire."""
+    return np.logical_not(np.all(positions == prev_positions))
