@@ -162,7 +162,7 @@ def _hyperreactor(method, snapshot, helpers):
 
         # ---- sphere piston, gated ON only after equilibration ----
         sphere_on = nsteps >= equil_steps
-        t_sphere = np.maximum(0.0, (nsteps - equil_steps).astype(dt.dtype)) * dt   # clock starts at equil
+        t_sphere = np.maximum(0.0, (nsteps - equil_steps).astype(float)) * dt   # clock starts at equil (dt is a py float on ASE)
         sforce, sproj = ext_force(data, t_sphere)      # +grad(U_sphere), # atoms outside wall
         sphere_bias = np.where(sphere_on, -sforce, 0.0)
 

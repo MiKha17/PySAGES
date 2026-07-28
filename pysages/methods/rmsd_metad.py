@@ -15,9 +15,10 @@ with a switch-on ramp f_dmp_i so a freshly deposited hill grows in smoothly (no 
 A new reference is deposited every `stride` real MD steps, up to `nmax`. The additive bias force
 is -grad(V), from jax.grad (differentiating MSD, Kabsch held fixed by stop_gradient).
 
-Optionally, a STATIC confining wall (from confinement.get_logfermi_wall) can be supplied via
-`wall=`; its force is added to the bias to keep gas-phase molecules together during exploration,
-exactly as CREST does. No energy patch is required.
+Optionally, a confining wall can be supplied via `wall=`; its force is added to the bias to keep
+gas-phase molecules together during exploration. The CREST-standard choice is a static log-Fermi
+wall (confinement.get_logfermi_wall), which ignores the time argument; a time-dependent piston
+(confinement.get_sphere_force) also works and follows the real MD clock. No energy patch is required.
 """
 from functools import partial
 
@@ -95,8 +96,10 @@ class RMSDMetadynamics(SamplingMethod):
     stride:  deposit a new reference every this many real MD steps. Default 100.
     nmax:    maximum number of reference structures. Default 50.
     kappa:   switch-on damping rate per step (CREST uses 0.03). Default 0.03.
-    wall:    optional static confinement force from confinement.get_logfermi_wall(...);
-             its force is added to the bias to keep molecules together. Default None.
+    wall:    optional confinement force with signature (data, t) -> (force, proj), e.g.
+             confinement.get_logfermi_wall(...) [static, CREST-standard] or
+             get_sphere_force(...) [moving piston]. Added to the bias to keep molecules
+             together; receives the real MD clock nsteps*dt. Default None.
     """
 
     snapshot_flags = {"positions", "indices"}
@@ -124,7 +127,8 @@ def _rmsd_metad(method, snapshot, helpers):
     stride = method.stride
     nmax = method.nmax
     kappa = method.kappa
-    wall = method.wall                                   # optional static confining wall
+    dt = snapshot.dt                                     # ASE time step (py float)
+    wall = method.wall                                   # optional confining wall (static or moving)
 
     def initialize():
         bias = np.zeros((natoms, dim))
@@ -156,9 +160,11 @@ def _rmsd_metad(method, snapshot, helpers):
         gV = grad(_bias_potential)(x, references, dep_steps, active, t, k, alpha, kappa)
         bias = -gV.reshape(state.bias.shape)
 
-        # --- optional static confining wall (added, kept a separate term) ---
+        # --- optional confining wall (added, kept a separate term) ---
+        # pass the real guarded clock: a static log-Fermi wall ignores t; a moving
+        # piston (get_sphere_force) follows it. nsteps*dt avoids any .dtype access.
         if wall is not None:
-            wforce, _ = wall(data, 0.0)
+            wforce, _ = wall(data, nsteps * dt)
             bias = bias - wforce.reshape(state.bias.shape)
 
         # --- diagnostics ---
