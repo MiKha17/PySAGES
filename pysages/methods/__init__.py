@@ -63,7 +63,6 @@ from .abf import ABF
 from .ann import ANN
 from .bias import Bias
 from .cff import CFF
-from .confinement import Confinement
 from .core import SamplingMethod
 from .ffs import FFS
 from .funn import FUNN
@@ -84,5 +83,5 @@ from .utils import (
 )
 from .gamd import GaMD  #reactive-md
 from .rmsd_metad import RMSDMetadynamics  #reactive-md
-from .confinement import Confinement  #reactive-md"
+from .confinement import Confinement  #reactive-md
 from .hyperreactor import Hyperreactor  #reactive-md
