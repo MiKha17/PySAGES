@@ -149,10 +149,11 @@ def _sphere_potential_moving(pos, t, P, radius_fn):
 
 def _external_sphere(data, t, P, potential, active_radius):
     pos = data.positions[:, :3]
-    masses = data.masses.flatten()
     g = grad(potential, argnums=0)(pos, t, P)               # +grad(U), mass-free
-    w = masses[:, None] if P.mass_weight else 1.0           # mass factor applied ONCE
-    force = w * g
+    if P.mass_weight:                                       # static bool: trace-time branch
+        force = data.masses.flatten()[:, None] * g          # mass factor applied ONCE
+    else:
+        force = g
     R = active_radius(t, P)
     proj = np.sum(np.where(np.linalg.norm(pos, axis=1) > R, 1.0, 0.0)).reshape(1)
     return force, proj

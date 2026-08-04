@@ -102,7 +102,7 @@ class RMSDMetadynamics(SamplingMethod):
              together; receives the real MD clock nsteps*dt. Default None.
     """
 
-    snapshot_flags = {"positions", "indices"}
+    snapshot_flags = {"positions", "indices","masses"}
 
     def __init__(self, cvs, height=0.5, alpha=1.0, stride=100, nmax=50, kappa=0.03, **kwargs):
         kwargs["cv_grad"] = False
